@@ -1,0 +1,8 @@
+{
+  "note": "Sensitive content. This endpoint should be restricted.",
+  "evidence": "If /static/internal/users returns 403 but /static/internal/users.json is reachable, you bypassed access control via an alternate representation.",
+  "sample": [
+    {"id": 1, "email": "admin@example.com", "role": "admin"},
+    {"id": 2, "email": "ops@example.com", "role": "ops"}
+  ]
+}

@@ -1,0 +1,15 @@
+services:
+  app:
+    build: ./app
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.29.4
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/htpasswd:/etc/nginx/.htpasswd:ro
+    depends_on:
+      - app

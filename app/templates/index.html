@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>FBps Test Lab</title>
+  <style>
+    :root{
+      --bg: #0b0b0b;
+      --panel: #111;
+      --text: #f2f2f2;
+      --muted: #b9b9b9;
+      --border: #242424;
+
+      --code-bg: #0f0f10;
+      --code-border: #2b2b2b;
+      --code-text: #f6f6f6;
+      --inline-code-bg: #1a1a1a;
+    }
+
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.55;
+      margin: 24px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    h1, h2, h3 { color: var(--text); }
+    h2 { margin-top: 28px; }
+
+    p, li { color: var(--text); }
+
+    .note{ color: var(--muted); }
+
+    .block{
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .expect{
+      font-size: 0.95em;
+      color: var(--muted);
+    }
+
+    .banner{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      white-space: pre;      /* preserva newline e spazi */
+      line-height: 1.1;
+      font-size: 14px;
+      margin: 18px 0;
+      /* stile “non-code”: niente bordo/sfondo da blocco codice */
+      color: var(--text);
+      opacity: .95;
+    }
+
+
+    /* inline code */
+    code{
+      background: var(--inline-code-bg);
+      color: var(--code-text);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size: 0.95em;
+    }
+
+    /* code blocks */
+    pre{
+      margin: 12px 0 0;
+      padding: 12px 14px;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 12px;
+      overflow: auto;              /* scroll orizzontale se serve */
+    }
+
+    pre code{
+      background: transparent;     /* evita “doppio sfondo” */
+      padding: 0;
+      border-radius: 0;
+      display: block;
+      white-space: pre;            /* preserva a capo/spazi */
+      line-height: 1.35;
+      color: var(--code-text);
+      font-size: 13.5px;
+    }
+
+    /* banner ascii */
+    pre.banner{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      white-space: pre;
+      line-height: 1.1;
+      font-size: 14px;
+      margin: 18px 0;
+      padding: 14px 16px;
+      background: #0e0e0f;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: auto;
+      color: var(--text);
+    }
+
+    a { color: #9bdcff; }
+  </style>
+</head>
+
+<body>
+  <div class="banner" aria-label="FBps banner">
+   /$$$$$$$$ /$$$$$$$     Forbidden Bypass
+  | $$_____/| $$__  $$
+  | $$      | $$  \ $$  /$$$$$$   /$$$$$$$
+  | $$$$$   | $$$$$$$  /$$__  $$ /$$_____/
+  | $$__/   | $$__  $$| $$  \ $$|  $$$$$$
+  | $$      | $$  \ $$| $$  | $$ \____  $$
+  | $$      | $$$$$$$/| $$$$$$$/ /$$$$$$$/
+  |__/      |_______/ | $$____/ |_______/
+                      | $$
+                      | $$
+                      |__/
+  </div>
+  <h2>Test targets: Nginx (Reverse Proxy) → Flask Application (Backend)</h2>
+  <p class="note">
+    The goal is to start from a canonical blocked URL (401/403) and verify whether an alternate variant
+    returns <code>200 OK</code> and exposes restricted content.
+  </p>
+
+  <div class="block">
+    <h3>1) Admin area — off-by-slash bypass (403)</h3>
+    <ul>
+      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/admin/</code> <span class="expect">(expected: 403)</span></li>
+      <li><strong>Bypass candidate:</strong> <code>http://fbps.com/admin</code> <span class="expect">(expected: 200)</span></li>
+    </ul>
+    <p><strong>Bypass Reason</strong></p>
+    <p class="expect">Because the deny rule matches only the <code>/admin/</code> prefix, the <code>/admin</code> variant does not hit it
+     and falls back to <code>location /</code>, which proxies the request to the backend. If the backend accepts <code>/admin</code> and
+     <code>/admin/</code> as equivalent, <code>/admin</code> returns 200 OK while <code>/admin/</code> is blocked.</p>
+    <p><strong>Vulnerable Nginx Configuration:</strong></p>
+    <pre><code>location / {
+    proxy_pass http://app_upstream;
+}
+
+
+location /admin/ {
+    return 403;
+}</code></pre>
+  </div>
+
+  <div class="block">
+    <h3>2) Private area — authentication bypass (401)</h3>
+    <ul>
+      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/private/</code> <span class="expect">(expected: 401)</span></li>
+      <li><strong>Bypass candidate:</strong> <code>http://fbps.com/private/index.html</code> <span class="expect">(expected: 200)</span></li>
+    </ul>
+    <p><strong>Bypass Reason:</strong></p>
+    <p class="expect"> Basic Auth is enforced only on the exact-match location <code>/private/</code>; requests to
+    <code>/private/index.html</code> do not hit that rule and fall back to a more permissive proxy location, reaching the backend without
+    authentication.</p>
+    <p><strong>Vulnerable Nginx Configuration:</strong></p>
+    <pre><code>location / {
+    proxy_pass http://app_upstream;
+}
+
+
+location = /private/ {
+    auth_basic "Restricted";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+    proxy_pass http://app_upstream;
+}</code></pre>
+  </div>
+
+  <div class="block">
+    <h3>3) Internal File — regex vs prefix mismatch (403 → 200)</h3>
+    <ul>
+      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/static/internal/users</code> <span class="expect">(expected: 403)</span></li>
+      <li><strong>Bypass candidate:</strong> <code>http://fbps.com/static/internal/users.json</code> <span class="expect">(expected: 200)</span></li>
+    </ul>
+    <p><strong>Bypass Reason:</strong></p>
+    <p class="expect">The prefix deny rule <code>location /static/</code> is overridden by the case-insensitive regex
+    <code>location ~* \.json$</code>; as a result, requests ending in <code>.json</code> are routed to the backend even under
+    <code>/static/</code>, returning <code>200 OK</code> instead of <code>403</code>.
+    </p>
+    <p><strong>Vulnerable Nginx Configuration:</strong></p>
+    <pre><code>location /static/ {
+    return 403;
+}
+
+location ~* \.json$ {
+    proxy_pass http://app_upstream;
+}</code></pre>
+  </div>
+
+  <div class="block">
+    <h3>4) Forwarded headers — X-Forwarded-For</h3>
+    <ul>
+      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/local/</code></li>
+      <li><strong>Bypass candidate:</strong> <code>curl -s http://fbps.com/local/ -H "X-Forwarded-For: 127.0.0.1"</code></li>
+    </ul>
+    <p><strong>Bypass Reason:</strong></p>
+    <p class="expect">Access control relies on <code>$http_x_forwarded_for</code>, which is derived from a
+    client-controlled header. By sending <code>X-Forwarded-For: 127.0.0.1</code>, the request satisfies the check and is
+    proxied to the backend, resulting in <code>200 OK</code>.</p>
+    <p><strong>Vulnerable Nginx Configuration</strong></p>
+    <pre><code>location /local {
+    if ($http_x_forwarded_for !~ "^127\.0\.0\.1(,|$)") {
+      return 403;
+    }
+
+    proxy_pass http://app_upstream;
+}</code></pre>
+  </div>
+
+  <div class="block">
+    <h3>5) Trim Inconsistencies</h3>
+    <ul>
+      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/trim/</code></li>
+      <li><strong>Bypass candidate:</strong> <code>curl http://fbps.com --request-target "$(printf '/trim\xa0')"</code></li>
+    </ul>
+    <p><strong>Bypass Reason:</strong></p>
+    <p class="expect">The reverse proxy applies the deny rule to an “exact” request path, but the backend receives a
+    differently normalized/trimmed path. By using a non-standard trailing character in the request-target (e.g., a non-breaking space),
+    the proxy and the backend may interpret the path differently, allowing the request to bypass the intended <code>403</code> check.
+    </p>
+    <p><strong>Vulnerable Nginx Configuration</strong></p>
+    <pre><code>location = /trim {
+    return 403;
+}
+
+location = /trim/ {
+    return 403;
+}</code></pre>
+  </div>
+
+<div class="block">
+  <h3>6) API version downgrade</h3>
+  <ul>
+    <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/api/v2/secrets</code></li>
+    <li><strong>Bypass candidate:</strong> <code>http://fbps.com/api/v1/secrets</code></li>
+  </ul>
+  <p><strong>Bypass Reason:</strong></p>
+  <p class="expect">
+    Access control is enforced only on the latest API version under
+    <code>/api/v2/</code>, while legacy endpoints such as
+    <code>/api/v1/secrets</code> remain reachable and return
+    <code>200 OK</code>. By “downgrading” the request to an older version,
+    an attacker can access the same sensitive data without hitting the
+    restrictive rule.
+  </p>
+  <p><strong>Vulnerable Nginx Configuration</strong></p>
+  <pre><code>location / {
+    proxy_pass http://app_upstream;
+}
+
+location /api/v2/ {
+    return 403;
+}</code></pre>
+</div>
+
+<div class="block">
+  <h3>7) Case mismatch</h3>
+  <ul>
+    <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/services/myservice/status</code></li>
+    <li><strong>Bypass candidate:</strong> <code>http://fbps.com/SERVICES/myservice/status</code></li>
+  </ul>
+
+  <p><strong>Bypass Reason:</strong></p>
+  <p class="expect">
+    The reverse proxy enforces access control only on the lowercase path
+    <code>/services/myservice</code>, because its matching rules are case-sensitive.
+    The backend, however, accepts this service path in a case-insensitive manner.
+    As a result, any differently cased variant (e.g. <code>/SERVICES/MYSERVICE/STATUS</code>)
+    does not match the proxy’s restriction but still resolves to the same backend
+    endpoint, allowing the request to succeed with <code>200 OK</code>.
+  </p>
+  <p><strong>Vulnerable Nginx Configuration</strong></p>
+  <pre><code>location / {
+    proxy_pass http://app_upstream;
+}
+
+location /services/myservice {
+    return 403;
+}</code></pre>
+</div>
+
+<div class="block">
+  <h3>8) User-Agent allowlist</h3>
+  <ul>
+    <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/user_agent</code></li>
+    <li><strong>Bypass candidate:</strong> <code>curl -i -H "User-Agent: FBps/1.0" http://fbps.com/user_agent</code></li>
+  </ul>
+  <p><strong>Bypass Reason:</strong></p>
+  <p class="expect">
+    Access to <code>/user_agent</code> is restricted by the reverse proxy unless the
+    request’s <code>User-Agent</code> matches an allowlist pattern. By setting the
+    header to an allowed value such as <code>FBps/1.0</code>, a client satisfies the
+    regex-based rule and reaches the backend, receiving <code>200 OK</code>.
+  </p>
+  <p><strong>Vulnerable Nginx Configuration</strong></p>
+  <pre><code>map $http_user_agent $ua_allowed {
+  default 0;
+  ~^FBps(\b|/|$) 1;
+}
+
+location = /user_agent {
+    if ($ua_allowed = 0) { 
+        return 403; 
+    }
+    
+    proxy_pass http://app_upstream;
+}</code></pre>
+</div>
+
+  <h2>Recommended FBps commands</h2>
+  <ul>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }}  http://fbps.com/admin/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 http://fbps.com/private/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} http://fbps.com/static/internal/users</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 http://fbps.com/local/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 http://fbps.com/trim/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} http://fbps.com/api/v2/secrets</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2  http://fbps.com/services/myservice/status</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -ua "FBps/1.0"  http://fbps.com/user_agent</code></li>
+  </ul>
+</body>
+</html>
