@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>FBps Test Lab</title>
+  <title>FBps Lab</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -20,7 +20,7 @@
                     | $$        Forbidden Bypasss Laboratory                                            
                     |__/                                              
   </div>
-  <h2>Test targets: Nginx (Reverse Proxy) → Flask Application (Backend)</h2>
+  <h2>Targets: Nginx (Reverse Proxy) → Flask Application (Backend)</h2>
   <p class="note">
     The goal is to start from a canonical blocked URL (401/403) and verify whether an alternate variant
     returns <code>200 OK</code> and exposes restricted content.
