@@ -77,12 +77,12 @@ location = /private/ {
       <li><strong>Bypass candidate:</strong> <code>http://fbps.com/static/internal/users.json</code> <span class="expect">(expected: 200)</span></li>
     </ul>
     <p><strong>Bypass Reason:</strong></p>
-    <p class="expect">The prefix deny rule <code>location /static/</code> is overridden by the case-insensitive regex
+    <p class="expect">The prefix deny rule <code>location /static/internal</code> is overridden by the case-insensitive regex
     <code>location ~* \.json$</code>; as a result, requests ending in <code>.json</code> are routed to the backend even under
     <code>/static/</code>, returning <code>200 OK</code> instead of <code>403</code>.
     </p>
     <p><strong>Vulnerable Nginx Configuration:</strong></p>
-    <pre><code>location /static/ {
+    <pre><code>location /static/internal {
     return 403;
 }
 
