@@ -7,6 +7,7 @@
 </head>
 
 <body>
+  {% set base = request.url_root.rstrip('/') %}
   <div class="banner" aria-label="FBps banner">
  /$$$$$$$$ /$$$$$$$                      /$$                /$$      
 | $$_____/| $$__  $$                    | $$                | $$      
@@ -29,8 +30,8 @@
   <div class="block">
     <h3>1) Admin area — off-by-slash bypass (403)</h3>
     <ul>
-      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/admin/</code> <span class="expect">(expected: 403)</span></li>
-      <li><strong>Bypass candidate:</strong> <code>http://fbps.com/admin</code> <span class="expect">(expected: 200)</span></li>
+      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/admin/</code> <span class="expect">(expected: 403)</span></li>
+      <li><strong>Bypass candidate:</strong> <code>{{ base }}/admin</code> <span class="expect">(expected: 200)</span></li>
     </ul>
     <p><strong>Bypass Reason</strong></p>
     <p class="expect">Because the deny rule matches only the <code>/admin/</code> prefix, the <code>/admin</code> variant does not hit it
@@ -50,8 +51,8 @@ location /admin/ {
   <div class="block">
     <h3>2) Private area — authentication bypass (401)</h3>
     <ul>
-      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/private/</code> <span class="expect">(expected: 401)</span></li>
-      <li><strong>Bypass candidate:</strong> <code>http://fbps.com/private/index.html</code> <span class="expect">(expected: 200)</span></li>
+      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/private/</code> <span class="expect">(expected: 401)</span></li>
+      <li><strong>Bypass candidate:</strong> <code>{{ base }}/private/index.html</code> <span class="expect">(expected: 200)</span></li>
     </ul>
     <p><strong>Bypass Reason:</strong></p>
     <p class="expect"> Basic Auth is enforced only on the exact-match location <code>/private/</code>; requests to
@@ -73,8 +74,8 @@ location = /private/ {
   <div class="block">
     <h3>3) Internal File — regex vs prefix mismatch (403 → 200)</h3>
     <ul>
-      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/static/internal/users</code> <span class="expect">(expected: 403)</span></li>
-      <li><strong>Bypass candidate:</strong> <code>http://fbps.com/static/internal/users.json</code> <span class="expect">(expected: 200)</span></li>
+      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/static/internal/users</code> <span class="expect">(expected: 403)</span></li>
+      <li><strong>Bypass candidate:</strong> <code>{{ base }}/static/internal/users.json</code> <span class="expect">(expected: 200)</span></li>
     </ul>
     <p><strong>Bypass Reason:</strong></p>
     <p class="expect">The prefix deny rule <code>location /static/internal</code> is overridden by the case-insensitive regex
@@ -94,8 +95,8 @@ location ~* \.json$ {
   <div class="block">
     <h3>4) Forwarded headers — X-Forwarded-For</h3>
     <ul>
-      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/local/</code></li>
-      <li><strong>Bypass candidate:</strong> <code>curl -s http://fbps.com/local/ -H "X-Forwarded-For: 127.0.0.1"</code></li>
+      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/local/</code></li>
+      <li><strong>Bypass candidate:</strong> <code>curl -s {{ base }}/local/ -H "X-Forwarded-For: 127.0.0.1"</code></li>
     </ul>
     <p><strong>Bypass Reason:</strong></p>
     <p class="expect">Access control relies on <code>$http_x_forwarded_for</code>, which is derived from a
@@ -114,8 +115,8 @@ location ~* \.json$ {
   <div class="block">
     <h3>5) Trim Inconsistencies</h3>
     <ul>
-      <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/trim/</code></li>
-      <li><strong>Bypass candidate:</strong> <code>curl http://fbps.com --request-target "$(printf '/trim\xa0')"</code></li>
+      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/trim/</code></li>
+      <li><strong>Bypass candidate:</strong> <code>curl {{ base }} --request-target "$(printf '/trim\xa0')"</code></li>
     </ul>
     <p><strong>Bypass Reason:</strong></p>
     <p class="expect">The reverse proxy applies the deny rule to an "exact" request path, but the backend receives a
@@ -135,8 +136,8 @@ location = /trim/ {
 <div class="block">
   <h3>6) API version downgrade</h3>
   <ul>
-    <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/api/v2/secrets</code></li>
-    <li><strong>Bypass candidate:</strong> <code>http://fbps.com/api/v1/secrets</code></li>
+    <li><strong>Canonical endpoint:</strong> <code>{{ base }}/api/v2/secrets</code></li>
+    <li><strong>Bypass candidate:</strong> <code>{{ base }}/api/v1/secrets</code></li>
   </ul>
   <p><strong>Bypass Reason:</strong></p>
   <p class="expect">
@@ -160,8 +161,8 @@ location /api/v2/ {
 <div class="block">
   <h3>7) Case mismatch</h3>
   <ul>
-    <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/services/myservice/status</code></li>
-    <li><strong>Bypass candidate:</strong> <code>http://fbps.com/SERVICES/myservice/status</code></li>
+    <li><strong>Canonical endpoint:</strong> <code>{{ base }}/services/myservice/status</code></li>
+    <li><strong>Bypass candidate:</strong> <code>{{ base }}/SERVICES/myservice/status</code></li>
   </ul>
 
   <p><strong>Bypass Reason:</strong></p>
@@ -186,8 +187,8 @@ location /services/myservice {
 <div class="block">
   <h3>8) User-Agent allowlist</h3>
   <ul>
-    <li><strong>Canonical endpoint:</strong> <code>http://fbps.com/user_agent</code></li>
-    <li><strong>Bypass candidate:</strong> <code>curl -i -H "User-Agent: FBps/1.0" http://fbps.com/user_agent</code></li>
+    <li><strong>Canonical endpoint:</strong> <code>{{ base }}/user_agent</code></li>
+    <li><strong>Bypass candidate:</strong> <code>curl -i -H "User-Agent: FBps/1.0" {{ base }}/user_agent</code></li>
   </ul>
   <p><strong>Bypass Reason:</strong></p>
   <p class="expect">
@@ -213,14 +214,14 @@ location = /user_agent {
 
   <h2>Recommended FBps commands</h2>
   <ul>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }}  http://fbps.com/admin/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 http://fbps.com/private/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} http://fbps.com/static/internal/users</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 http://fbps.com/local/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 http://fbps.com/trim/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} http://fbps.com/api/v2/secrets</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2  http://fbps.com/services/myservice/status</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -ua "FBps/1.0"  http://fbps.com/user_agent</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }}  {{ base }}/admin/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/private/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} {{ base }}/static/internal/users</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/local/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/trim/</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} {{ base }}/api/v2/secrets</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2  {{ base }}/services/myservice/status</code></li>
+    <li><code>python fbps.py -v --exclude-length {{ index_len }} -ua "FBps/1.0"  {{ base }}/user_agent</code></li>
   </ul>
 </body>
 </html>
