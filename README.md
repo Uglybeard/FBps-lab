@@ -18,11 +18,11 @@ FBpsLab runs two main services via Docker Compose:
 A simplified request flow:
 
 ```
-+--------------------+        HTTP         +------------------------+        HTTP        +----------------------+
-|       Client       |  -----------------> |   Nginx Reverse Proxy  |  ----------------> |   Flask Backend App  |
-| (FBps, curl, etc.) |   Host: fbps.com    | (locations, auth, ACL) |   upstream :8000   |  (routes, responses) |
-|                    |                     |                        |                    |                      |
-+--------------------+                     +------------------------+                    +----------------------+
++--------------------+      HTTP        +------------------------+      HTTP       +---------------------+
+|       Client       | -------------->  |   Nginx Reverse Proxy  | --------------> |  Flask Backend App  |
+| (FBps, curl, etc.) |  Host: fbps.com  | (locations, auth, ACL) |  upstream :8000 | (routes, responses) |
+|                    |                  |                        |                 |                     |
++--------------------+                  +------------------------+                 +---------------------+
 ```
 
 ## What you can test with this lab
