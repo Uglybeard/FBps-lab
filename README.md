@@ -1,5 +1,7 @@
 # FBpsLab (Forbidden Bypass Laboratory)
 
+![FBps banner](/img/fbpslab.png)
+
 FBpsLab is a small, containerized lab environment that demonstrates how **401 Unauthorized**
 and **403 Forbidden** controls can be accidentally bypassed when a **reverse proxy (Nginx)**
 and a **backend (Flask)** interpret or match requests differently.
@@ -20,7 +22,7 @@ A simplified request flow:
 ```
 +--------------------+      HTTP        +------------------------+      HTTP       +------------------+
 |       Client       | -------------->  |   Nginx Reverse Proxy  | --------------> |  Flask Backend   |
-| (FBps, curl, etc.) |  Host: fbps.com  | (locations, auth, ACL) |  upstream :8000 |  (routes, resp.) |
+| (FBps, curl, etc.) |  Host: fbps.com  | (locations, auth, ACL) |  upstream :8000 |   (app logic)    |
 |                    |                  |                        |                 |                  |
 +--------------------+                  +------------------------+                 +------------------+
 ```
