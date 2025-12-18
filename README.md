@@ -2,12 +2,15 @@
 
 ![FBps banner](/img/fbpslab.png)
 
+[![Docker](https://img.shields.io/badge/Docker-required-blue)](https://www.docker.com/)
+[![Educational](https://img.shields.io/badge/Purpose-Educational-orange)]()
+
 FBpsLab is a small, containerized lab environment that demonstrates how **401 Unauthorized**
-and **403 Forbidden** controls can be accidentally bypassed when a **reverse proxy (Nginx)**
+and **403 Forbidden** controls can be bypassed when a **reverse proxy (Nginx)**
 and a **backend (Flask)** interpret or match requests differently.
 
 It is intended for **academic, training, and demonstrative** purposes in controlled environments,
-and can be tested with **FBps** or similar tools that generate request variations (path, headers,
+and can be tested with **[FBps](https://github.com/Uglybeard/FBps)** or similar tools that generate request variations (path, headers,
 methods, normalization quirks).
 
 ## Architecture
@@ -27,27 +30,17 @@ A simplified request flow:
 +--------------------+                  +------------------------+                 +------------------+
 ```
 
-## What you can test with this lab
+## Vulnerable Patterns Included
 
-FBpsLab includes multiple intentionally vulnerable patterns that commonly cause 401/403 bypasses,
-such as:
+FBpsLab demonstrates common misconfigurations that lead to 401/403 bypasses: location matching edge cases (prefix vs exact-match, trailing slashes), regex vs prefix precedence issues, unsafe header-based controls (forwarded headers), normalization discrepancies between proxy and backend, legacy/versioned API paths where newer versions are protected but older ones remain accessible, case-sensitivity mismatches, and allowlist logic based on client-controlled patterns.
 
-- Location matching edge cases (prefix vs exact-match, slash differences)
-- Regex vs prefix precedence issues (routing to an unexpected handler)
-- Header-based controls that can be unsafe if based on client-controlled values (e.g., forwarded headers)
-- Normalization discrepancies (different trimming / decoding between proxy and backend)
-- Legacy / versioned API paths (newer paths protected while older equivalents remain reachable)
-- Case-sensitivity mismatches between proxy matching and backend routing
-- Allowlist logic based on patterns (e.g., User-Agent gating)
-
-The backend endpoints return clear responses so you can confirm whether the request was stopped at
-the proxy or successfully reached the application.
+Backend endpoints return clear responses confirming whether requests were blocked at the proxy or reached the application.
 
 ## Usage
 
 ### Requirements
-- Docker + Docker Compose
-- curl / browser (optionally FBps)
+- Docker and Docker Compose installed
+- Basic HTTP client (curl, browser, or [FBps](https://github.com/Uglybeard/FBps))
 
 ### Start the lab
 From the project root:
@@ -61,43 +54,42 @@ This starts:
 - Nginx on port 80 (published as 80:80 on the host)
 - Flask app on port 8000 (internal service port, reached via Nginx upstream)
 
-### Hostname setup (recommended)
+### Hostname setup (Recommended)
 
-Nginx is configured to serve requests for the hostname "fbps.com".
+Nginx is configured to serve requests for the hostname `fbps.com`.
+
 For the most realistic reverse-proxy behavior, map that name to localhost:
 
-On Linux/macOS, edit:
-  /etc/hosts
+**On Linux/macOS**, edit:
+```
+/etc/hosts
+```
+
+**On Windows** (as Administrator), edit:
+```
+C:\Windows\System32\drivers\etc\hosts
+```
 
 Add this line:
-  127.0.0.1 fbps.com
+```
+127.0.0.1 fbps.com
+```
 
-On Windows, edit (as Administrator):
-  C:\Windows\System32\drivers\etc\hosts
+Then you can test via: http://fbps.com/
 
-Add the same line:
-  127.0.0.1 fbps.com
-
-Then you can test via:
-  http://fbps.com/
-
-### Alternative (no hosts file change)
+### Alternative (No Hosts File Change)
 
 If you cannot edit hosts, you can still target localhost and force the Host header, e.g.:
 
+```bash
 curl -i http://127.0.0.1/ -H "Host: fbps.com"
+```
 
-This is also useful when driving tests via scripts/tools that can set custom headers.
+or
 
-### Typical workflow
-
-1) Start the lab (docker compose up --build)
-2) Confirm the homepage loads (http://fbps.com/ or curl with Host header)
-3) Probe baseline endpoints that should return 401/403
-4) Use FBps (or similar) to generate request variants and observe response changes that indicate a bypass
-5) Iterate: adjust proxy rules, re-test, and document findings
-
----
+```bash
+python3 fbps.py -H "Host: fbps.com" http://127.0.0.1
+```
 
 ## Disclaimer
 
