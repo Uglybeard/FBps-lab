@@ -26,7 +26,6 @@ body{
   color: var(--text);
 }
 
-/* Navbar */
 .navbar {
   position: sticky;
   top: 0;
@@ -77,14 +76,12 @@ body{
   color: #ffd43b;
 }
 
-/* Container */
 .container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 32px 24px;
 }
 
-/* Header with banner */
 .header {
   margin-bottom: 32px;
 }
@@ -105,7 +102,6 @@ body{
   font-size: 16px;
 }
 
-/* Grid */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(650px, 1fr));
@@ -119,7 +115,6 @@ body{
   }
 }
 
-/* Cards */
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -161,7 +156,6 @@ body{
   color: #ffd43b;
 }
 
-/* Endpoints */
 .endpoints {
   display: flex;
   flex-direction: column;
@@ -171,7 +165,7 @@ body{
 
 .endpoint {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   font-size: 14px;
 }
@@ -190,9 +184,12 @@ body{
   font-family: ui-monospace, monospace;
   font-size: 15px;
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .endpoint-status {
@@ -213,7 +210,6 @@ body{
   color: var(--success);
 }
 
-/* Card details (collapsible) */
 .card-details {
   max-height: 0;
   overflow: hidden;
@@ -244,7 +240,6 @@ body{
   border-radius: 6px;
 }
 
-/* Config block */
 .config-block {
   margin-top: 14px;
 }
@@ -256,7 +251,6 @@ body{
   font-weight: 500;
 }
 
-/* Code */
 pre {
   margin: 0;
   padding: 14px;
@@ -284,7 +278,6 @@ code {
   font-size: 0.92em;
 }
 
-/* Commands section */
 .commands {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -311,11 +304,13 @@ code {
   font-family: ui-monospace, monospace;
   font-size: 14px;
   color: var(--code-text);
-  overflow-x: auto;
-  white-space: nowrap;
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-x: hidden;
 }
 
-/* Links */
 a { 
   color: var(--accent); 
   text-decoration: none;
