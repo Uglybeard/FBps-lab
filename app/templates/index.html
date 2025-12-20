@@ -2,13 +2,29 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>FBps Lab</title>
+  <title>FBpsLab - Forbidden Bypass Laboratory</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
   {% set base = request.url_root.rstrip('/') %}
-  <div class="banner" aria-label="FBps banner">
+  
+  <nav class="navbar">
+    <div class="navbar-title">FBpsLab</div>
+    <div class="navbar-links">
+      <a href="{{ base }}/admin/" class="navbar-link blocked" title="403 Forbidden">Admin</a>
+      <a href="{{ base }}/private/" class="navbar-link auth" title="401 Unauthorized">Private</a>
+      <a href="{{ base }}/static/internal/users" class="navbar-link blocked" title="403 Forbidden">Internal</a>
+      <a href="{{ base }}/local/" class="navbar-link blocked" title="403 Forbidden">Local</a>
+      <a href="{{ base }}/trim/" class="navbar-link blocked" title="403 Forbidden">Trim</a>
+      <a href="{{ base }}/api/v2/secrets" class="navbar-link blocked" title="403 Forbidden">API v2</a>
+      <a href="{{ base }}/services/myservice/status" class="navbar-link blocked" title="403 Forbidden">Services</a>
+      <a href="{{ base }}/user_agent" class="navbar-link blocked" title="403 Forbidden">User-Agent</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <div class="banner" aria-label="FBps banner">
  /$$$$$$$$ /$$$$$$$                      /$$                /$$      
 | $$_____/| $$__  $$                    | $$                | $$      
 | $$      | $$  \ $$  /$$$$$$   /$$$$$$$| $$        /$$$$$$ | $$$$$$$ 
@@ -20,208 +36,339 @@
                     | $$                                              
                     | $$        Forbidden Bypass Laboratory                                            
                     |__/                                              
-  </div>
-  <h2>Targets: Nginx (Reverse Proxy) → Flask Application (Backend)</h2>
-  <p class="note">
-    The goal is to start from a canonical blocked URL (401/403) and verify whether an alternate variant
-    returns <code>200 OK</code> and exposes restricted content.
-  </p>
+      </div>
+      <p>Intentionally vulnerable Nginx/Flask configurations for testing access control bypasses (401/403)</p>
+    </div>
 
-  <div class="block">
-    <h3>1) Admin area — off-by-slash bypass (403)</h3>
-    <ul>
-      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/admin/</code> <span class="expect">(expected: 403)</span></li>
-      <li><strong>Bypass candidate:</strong> <code>{{ base }}/admin</code> <span class="expect">(expected: 200)</span></li>
-    </ul>
-    <p><strong>Bypass Reason</strong></p>
-    <p class="expect">Because the deny rule matches only the <code>/admin/</code> prefix, the <code>/admin</code> variant does not hit it
-     and falls back to <code>location /</code>, which proxies the request to the backend. If the backend accepts <code>/admin</code> and
-     <code>/admin/</code> as equivalent, <code>/admin</code> returns 200 OK while <code>/admin/</code> is blocked.</p>
-    <p><strong>Vulnerable Nginx Configuration:</strong></p>
-    <pre><code>location / {
-    proxy_pass http://app_upstream;
-}
-
-
-location /admin/ {
+    <div class="grid">
+      <!-- Card 1: Off-by-slash -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>Off-by-slash bypass</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/admin/</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">{{ base }}/admin</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            The deny rule matches only <code>/admin/</code> prefix. The <code>/admin</code> variant falls back to <code>location /</code> and reaches the backend, which treats both paths as equivalent.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location /admin/ {
     return 403;
-}</code></pre>
-  </div>
-
-  <div class="block">
-    <h3>2) Private area — authentication bypass (401)</h3>
-    <ul>
-      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/private/</code> <span class="expect">(expected: 401)</span></li>
-      <li><strong>Bypass candidate:</strong> <code>{{ base }}/private/index.html</code> <span class="expect">(expected: 200)</span></li>
-    </ul>
-    <p><strong>Bypass Reason:</strong></p>
-    <p class="expect"> Basic Auth is enforced only on the exact-match location <code>/private/</code>; requests to
-    <code>/private/index.html</code> do not hit that rule and fall back to a more permissive proxy location, reaching the backend without
-    authentication.</p>
-    <p><strong>Vulnerable Nginx Configuration:</strong></p>
-    <pre><code>location / {
-    proxy_pass http://app_upstream;
 }
 
+location / {
+    proxy_pass http://app_upstream;
+}</code></pre>
+          </div>
+        </div>
+      </div>
 
-location = /private/ {
+      <!-- Card 2: Auth bypass -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>Exact-match auth gap</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-401">401</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/private/</code>
+            <span class="endpoint-status status-blocked">401</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">{{ base }}/private/index.html</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Basic Auth is enforced only on exact-match <code>= /private/</code>. Requests to <code>/private/index.html</code> don't match and fall back to permissive proxy location.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location = /private/ {
     auth_basic "Restricted";
     auth_basic_user_file /etc/nginx/.htpasswd;
     proxy_pass http://app_upstream;
-}</code></pre>
-  </div>
+}
 
-  <div class="block">
-    <h3>3) Internal File — regex vs prefix mismatch (403 → 200)</h3>
-    <ul>
-      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/static/internal/users</code> <span class="expect">(expected: 403)</span></li>
-      <li><strong>Bypass candidate:</strong> <code>{{ base }}/static/internal/users.json</code> <span class="expect">(expected: 200)</span></li>
-    </ul>
-    <p><strong>Bypass Reason:</strong></p>
-    <p class="expect">The prefix deny rule <code>location /static/internal</code> is overridden by the case-insensitive regex
-    <code>location ~* \.json$</code>; as a result, requests ending in <code>.json</code> are routed to the backend even under
-    <code>/static/</code>, returning <code>200 OK</code> instead of <code>403</code>.
-    </p>
-    <p><strong>Vulnerable Nginx Configuration:</strong></p>
-    <pre><code>location /static/internal {
+location / {
+    proxy_pass http://app_upstream;
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Regex precedence -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>Regex vs prefix precedence</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/static/internal/users</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">{{ base }}/static/internal/users.json</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Regex location <code>~* \.json$</code> overrides prefix deny rule. Requests ending in <code>.json</code> bypass the <code>/static/internal</code> restriction.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location /static/internal {
     return 403;
 }
 
 location ~* \.json$ {
     proxy_pass http://app_upstream;
 }</code></pre>
-  </div>
+          </div>
+        </div>
+      </div>
 
-  <div class="block">
-    <h3>4) Forwarded headers — X-Forwarded-For</h3>
-    <ul>
-      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/local/</code></li>
-      <li><strong>Bypass candidate:</strong> <code>curl -s {{ base }}/local/ -H "X-Forwarded-For: 127.0.0.1"</code></li>
-    </ul>
-    <p><strong>Bypass Reason:</strong></p>
-    <p class="expect">Access control relies on <code>$http_x_forwarded_for</code>, which is derived from a
-    client-controlled header. By sending <code>X-Forwarded-For: 127.0.0.1</code>, the request satisfies the check and is
-    proxied to the backend, resulting in <code>200 OK</code>.</p>
-    <p><strong>Vulnerable Nginx Configuration</strong></p>
-    <pre><code>location /local {
+      <!-- Card 4: X-Forwarded-For -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>X-Forwarded-For trust</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/local/</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">curl -H "X-Forwarded-For: 127.0.0.1" {{ base }}/local/</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Access control relies on <code>$http_x_forwarded_for</code>, a client-controlled header. By setting <code>X-Forwarded-For: 127.0.0.1</code>, the request satisfies the check.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location /local {
     if ($http_x_forwarded_for !~ "^127\.0\.0\.1(,|$)") {
-      return 403;
+        return 403;
     }
-
     proxy_pass http://app_upstream;
 }</code></pre>
-  </div>
+          </div>
+        </div>
+      </div>
 
-  <div class="block">
-    <h3>5) Trim Inconsistencies</h3>
-    <ul>
-      <li><strong>Canonical endpoint:</strong> <code>{{ base }}/trim/</code></li>
-      <li><strong>Bypass candidate:</strong> <code>curl {{ base }} --request-target "$(printf '/trim\xa0')"</code></li>
-    </ul>
-    <p><strong>Bypass Reason:</strong></p>
-    <p class="expect">The reverse proxy applies the deny rule to an "exact" request path, but the backend receives a
-    differently normalized/trimmed path. By using a non-standard trailing character in the request-target (e.g., a non-breaking space),
-    the proxy and the backend may interpret the path differently, allowing the request to bypass the intended <code>403</code> check.
-    </p>
-    <p><strong>Vulnerable Nginx Configuration</strong></p>
-    <pre><code>location = /trim {
+      <!-- Card 5: Trim inconsistencies -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>Trim inconsistencies</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/trim/</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">curl --request-target "$(printf '/trim\xa0')" {{ base }}</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Proxy and backend normalize paths differently. Using non-standard trailing characters (e.g., non-breaking space) causes interpretation mismatch, bypassing the exact-match deny rule.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location = /trim {
     return 403;
 }
 
 location = /trim/ {
     return 403;
 }</code></pre>
-  </div>
+          </div>
+        </div>
+      </div>
 
-<div class="block">
-  <h3>6) API version downgrade</h3>
-  <ul>
-    <li><strong>Canonical endpoint:</strong> <code>{{ base }}/api/v2/secrets</code></li>
-    <li><strong>Bypass candidate:</strong> <code>{{ base }}/api/v1/secrets</code></li>
-  </ul>
-  <p><strong>Bypass Reason:</strong></p>
-  <p class="expect">
-    Access control is enforced only on the latest API version under
-    <code>/api/v2/</code>, while legacy endpoints such as
-    <code>/api/v1/secrets</code> remain reachable and return
-    <code>200 OK</code>. By "downgrading" the request to an older version,
-    an attacker can access the same sensitive data without hitting the
-    restrictive rule.
-  </p>
-  <p><strong>Vulnerable Nginx Configuration</strong></p>
-  <pre><code>location / {
-    proxy_pass http://app_upstream;
+      <!-- Card 6: API downgrade -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>API version downgrade</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/api/v2/secrets</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">{{ base }}/api/v1/secrets</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Access control enforced only on <code>/api/v2/</code>. Legacy endpoint <code>/api/v1/secrets</code> remains accessible, returning the same sensitive data without restrictions.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location /api/v2/ {
+    return 403;
 }
 
-location /api/v2/ {
-    return 403;
-}</code></pre>
-</div>
-
-<div class="block">
-  <h3>7) Case mismatch</h3>
-  <ul>
-    <li><strong>Canonical endpoint:</strong> <code>{{ base }}/services/myservice/status</code></li>
-    <li><strong>Bypass candidate:</strong> <code>{{ base }}/SERVICES/myservice/status</code></li>
-  </ul>
-
-  <p><strong>Bypass Reason:</strong></p>
-  <p class="expect">
-    The reverse proxy enforces access control only on the lowercase path
-    <code>/services/myservice</code>, because its matching rules are case-sensitive.
-    The backend, however, accepts this service path in a case-insensitive manner.
-    As a result, any differently cased variant (e.g. <code>/SERVICES/MYSERVICE/STATUS</code>)
-    does not match the proxy's restriction but still resolves to the same backend
-    endpoint, allowing the request to succeed with <code>200 OK</code>.
-  </p>
-  <p><strong>Vulnerable Nginx Configuration</strong></p>
-  <pre><code>location / {
+location / {
     proxy_pass http://app_upstream;
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7: Case mismatch -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>Case-sensitivity mismatch</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/services/myservice/status</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">{{ base }}/SERVICES/myservice/status</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Proxy enforces case-sensitive matching on <code>/services/myservice</code>. Backend accepts case-insensitive paths. Any differently cased variant bypasses the proxy restriction.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>location /services/myservice {
+    return 403;
 }
 
-location /services/myservice {
-    return 403;
+location / {
+    proxy_pass http://app_upstream;
 }</code></pre>
-</div>
+          </div>
+        </div>
+      </div>
 
-<div class="block">
-  <h3>8) User-Agent allowlist</h3>
-  <ul>
-    <li><strong>Canonical endpoint:</strong> <code>{{ base }}/user_agent</code></li>
-    <li><strong>Bypass candidate:</strong> <code>curl -i -H "User-Agent: FBps/1.0" {{ base }}/user_agent</code></li>
-  </ul>
-  <p><strong>Bypass Reason:</strong></p>
-  <p class="expect">
-    Access to <code>/user_agent</code> is restricted by the reverse proxy unless the
-    request's <code>User-Agent</code> matches an allowlist pattern. By setting the
-    header to an allowed value such as <code>FBps/1.0</code>, a client satisfies the
-    regex-based rule and reaches the backend, receiving <code>200 OK</code>.
-  </p>
-  <p><strong>Vulnerable Nginx Configuration</strong></p>
-  <pre><code>map $http_user_agent $ua_allowed {
-  default 0;
-  ~^FBps(\b|/|$) 1;
+      <!-- Card 8: User-Agent -->
+      <div class="card">
+        <div class="card-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <h3>User-Agent allowlist</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="card-badge badge-403">403</span>
+            <span class="toggle-icon">▼</span>
+          </div>
+        </div>
+        <div class="endpoints">
+          <div class="endpoint">
+            <span class="endpoint-label">Blocked:</span>
+            <code class="endpoint-url">{{ base }}/user_agent</code>
+            <span class="endpoint-status status-blocked">403</span>
+          </div>
+          <div class="endpoint">
+            <span class="endpoint-label">Bypass:</span>
+            <code class="endpoint-url">curl -H "User-Agent: FBps/1.0" {{ base }}/user_agent</code>
+            <span class="endpoint-status status-bypass">200</span>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="reason">
+            Access restricted by User-Agent allowlist. Setting <code>User-Agent: FBps/1.0</code> matches the regex pattern and satisfies the check, reaching the backend.
+          </div>
+          <div class="config-block">
+            <div class="config-label">Vulnerable Configuration</div>
+            <pre><code>map $http_user_agent $ua_allowed {
+    default 0;
+    ~^FBps(\b|/|$) 1;
 }
 
 location = /user_agent {
     if ($ua_allowed = 0) { 
         return 403; 
     }
-    
     proxy_pass http://app_upstream;
 }</code></pre>
-</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <h2>Recommended FBps commands</h2>
-  <ul>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }}  {{ base }}/admin/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/private/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} {{ base }}/static/internal/users</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/local/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/trim/</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} {{ base }}/api/v2/secrets</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -L 2  {{ base }}/services/myservice/status</code></li>
-    <li><code>python fbps.py -v --exclude-length {{ index_len }} -ua "FBps/1.0"  {{ base }}/user_agent</code></li>
-  </ul>
+    <div class="commands">
+      <h2>FBps Test Commands</h2>
+      <div class="command-list">
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} {{ base }}/admin/</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/private/</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} {{ base }}/static/internal/users</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/local/</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/trim/</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} {{ base }}/api/v2/secrets</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} -L 2 {{ base }}/services/myservice/status</code>
+        <code class="command-item">python fbps.py -v --exclude-length {{ index_len }} -ua "FBps/1.0" {{ base }}/user_agent</code>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Expand first card by default
+    document.querySelector('.card').classList.add('expanded');
+  </script>
 </body>
 </html>
