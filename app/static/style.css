@@ -42,7 +42,7 @@ body{
 
 .navbar-title {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   color: var(--text);
   margin-right: auto;
 }
@@ -56,7 +56,7 @@ body{
 .navbar-link {
   color: var(--muted);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 16px;
   padding: 6px 12px;
   border-radius: 6px;
   transition: all 0.2s;
@@ -102,7 +102,7 @@ body{
 .header p {
   color: var(--muted);
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 /* Grid */
@@ -138,12 +138,12 @@ body{
 
 .card-header h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   color: var(--text);
 }
 
 .card-badge {
-  font-size: 11px;
+  font-size: 13px;
   padding: 3px 8px;
   border-radius: 4px;
   font-weight: 600;
@@ -179,7 +179,7 @@ body{
 .endpoint-label {
   color: var(--muted);
   min-width: 85px;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .endpoint-url {
@@ -188,12 +188,12 @@ body{
   padding: 6px 10px;
   border-radius: 6px;
   font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-size: 15px;
   flex: 1;
 }
 
 .endpoint-status {
-  font-size: 12px;
+  font-size: 14px;
   padding: 3px 8px;
   border-radius: 4px;
   font-weight: 500;
@@ -230,7 +230,7 @@ body{
 }
 
 .reason {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--muted);
   line-height: 1.6;
   margin: 14px 0;
@@ -246,7 +246,7 @@ body{
 }
 
 .config-label {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
   margin-bottom: 8px;
   font-weight: 500;
@@ -260,7 +260,7 @@ pre {
   border: 1px solid var(--code-border);
   border-radius: 8px;
   overflow: auto;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 pre code {
@@ -290,7 +290,7 @@ code {
 
 .commands h2 {
   margin: 0 0 16px 0;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .command-list {
@@ -305,7 +305,7 @@ code {
   border-radius: 6px;
   border: 1px solid var(--code-border);
   font-family: ui-monospace, monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--code-text);
   overflow-x: auto;
 }
