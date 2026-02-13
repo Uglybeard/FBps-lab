@@ -25,7 +25,7 @@ A simplified request flow:
 ```
 +--------------------+      HTTP        +------------------------+      HTTP       +------------------+
 |       Client       | -------------->  |   Nginx Reverse Proxy  | --------------> |  Flask Backend   |
-| (FBps, curl, etc.) |  Host: fbps.com  | (locations, auth, ACL) |  upstream :8000 |   (app logic)    |
+| (FBps, curl, etc.) | Host: 127.0.0.1  | (locations, auth, ACL) |  upstream :8000 |   (app logic)    |
 |                    |                  |                        |                 |                  |
 +--------------------+                  +------------------------+                 +------------------+
 ```
