@@ -4,6 +4,7 @@
 
 [![Docker](https://img.shields.io/badge/Docker-required-blue)](https://www.docker.com/)
 [![Educational](https://img.shields.io/badge/Purpose-Educational-orange)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 FBpsLab is a small, containerized lab environment that demonstrates how **401 Unauthorized**
 and **403 Forbidden** controls can be bypassed when a **reverse proxy (Nginx)**
