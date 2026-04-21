@@ -176,16 +176,16 @@ def user_agent_allowlist():
 def myservice_status():
     return """
 <head>
-  <title>MyService Status</title>
+  <title>Case-sensitivity mismatch</title>
 </head>
 <body>
-  <h1>MyService Status</h1>
+  <h1>Case-sensitivity mismatch</h1>
   <p><strong>This endpoint should be protected.</strong></p>
   <p>
-    Access to <code>/services/myservice/status</code> is intended to be denied by an upstream
-    rule that is incorrectly configured to match only a specific letter case
-    (e.g., it blocks <code>/services/myservice/status</code> but not
-    <code>/SERVICES/MYSERVICE/STATUS</code>).
+    Access to <code>/services/myservice/status</code> is intended to be denied by an upstream 
+    rule that matches only a specific letter case. However, the backend normalizes the request 
+    path and accepts any case representation, allowing variants such as 
+    <code>/SERVICES/MYSERVICE/STATUS</code> to bypass the restriction.
   </p>
   <p>
     If you are seeing this page while a request to the canonical lowercase URL returns

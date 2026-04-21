@@ -17,16 +17,16 @@ methods, normalization quirks).
 
 FBpsLab runs two main services via Docker Compose:
 
-- **Nginx**: reverse proxy and access-control enforcement layer (intentionally misconfigured in places)
+- **Nginx**: reverse proxy and access-control enforcement layer (intentionally misconfigured)
 - **Flask**: backend application exposing endpoints used to verify whether a request reached the app
 
 A simplified request flow:
 
 ```
-+--------------------+      HTTP        +------------------------+      HTTP       +------------------+
-|       Client       | -------------->  |   Nginx Reverse Proxy  | --------------> |  Flask Backend   |
-| (FBps, curl, etc.) | Host: 127.0.0.1  | (locations, auth, ACL) |  upstream :8000 |   (app logic)    |
-|                    |                  |                        |                 |                  |
++--------------------+                  +------------------------+                 +------------------+
+|       Client       |      HTTP        |   Nginx Reverse Proxy  |      HTTP       |  Flask Backend   |
+| (FBps, curl, etc.) | -------------->  | (locations, auth, ACL) | --------------> |   (app logic)    |
+|                    |                  |                        | upstream :8000  |                  |
 +--------------------+                  +------------------------+                 +------------------+
 ```
 
@@ -48,6 +48,13 @@ Backend endpoints return clear responses indicating whether the request was stop
 ### Requirements
 - Docker and Docker Compose installed
 - Basic HTTP client (curl, browser, or [FBps](https://github.com/Uglybeard/FBps))
+
+### Installation
+
+```bash
+git clone https://github.com/Uglybeard/FBpsLab.git
+cd FBpsLab
+```
 
 ### Start the lab
 From the project root:
