@@ -26,7 +26,7 @@ A simplified request flow:
 +--------------------+                  +------------------------+                 +------------------+
 |       Client       |      HTTP        |   Nginx Reverse Proxy  |      HTTP       |  Flask Backend   |
 | (FBps, curl, etc.) | -------------->  | (locations, auth, ACL) | --------------> |   (app logic)    |
-|                    |                  |                        | upstream :8000  |                  |
+|                    |   127.0.0.1:80   |                        | upstream :8000  |                  |
 +--------------------+                  +------------------------+                 +------------------+
 ```
 
@@ -52,8 +52,8 @@ Backend endpoints return clear responses indicating whether the request was stop
 ### Installation
 
 ```bash
-git clone https://github.com/Uglybeard/FBpsLab.git
-cd FBpsLab
+git clone https://github.com/Uglybeard/fbps-lab.git
+cd fbps-lab
 ```
 
 ### Start the lab
